@@ -80,9 +80,9 @@
       autocomplete="off"
     >
 
-    <button type="button" id="applyButton">
-      APPLY REWARD
-    </button>
+<button type="button" onclick="applyReward()">
+  APPLY REWARD
+</button>
 
     <div id="message"></div>
   </div>
@@ -95,9 +95,7 @@
 
     JFCustomWidget.subscribe("ready", function () {
 
-      document
-        .getElementById("applyButton")
-        .addEventListener("click", applyReward);
+   
 
       JFCustomWidget.subscribe("submit", function () {
         JFCustomWidget.sendSubmit({
