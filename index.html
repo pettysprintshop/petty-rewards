@@ -7,7 +7,9 @@
   <script src="https://cdn.jotfor.ms/s/umd/latest/for-custom-widgets.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -51,27 +53,36 @@
       border: 0;
       border-radius: 8px;
       background: #111;
-      color: white;
+      color: #fff;
       font-weight: bold;
       cursor: pointer;
     }
 
     #message {
       margin-top: 12px;
-      font-weight: bold;
       min-height: 18px;
+      font-weight: bold;
     }
 
-    .success { color: #16803a; }
-    .error { color: #b42318; }
+    .success {
+      color: #16803a;
+    }
+
+    .error {
+      color: #b42318;
+    }
   </style>
 </head>
 
 <body>
 
   <div class="reward-box">
+
     <h2>💗 Have a Petty Reward?</h2>
-    <p>Enter your Petty Reward code below.</p>
+
+    <p>
+      Enter your Petty Reward code below.
+    </p>
 
     <input
       id="rewardCode"
@@ -80,132 +91,164 @@
       autocomplete="off"
     >
 
-<button type="button" onclick="applyReward()">
-  APPLY REWARD
-</button>
+    <button
+      type="button"
+      onclick="applyReward()"
+    >
+      APPLY REWARD
+    </button>
 
     <div id="message"></div>
+
   </div>
 
+
   <script>
+
     const VALIDATION_URL =
       "https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
 
     let validatedReward = "";
 
-    JFCustomWidget.subscribe("ready", function () {
-
-   
-
-      JFCustomWidget.subscribe("submit", function () {
-        JFCustomWidget.sendSubmit({
-          valid: true,
-          value: validatedReward
-        });
-      });
-
-    });
-
-function getCustomerEmail(callback) {
-
-  JFCustomWidget.getFieldsValueById(
-    ["4"],
-    function (data) {
-
-      const message = document.getElementById("message");
-
-      message.className = "";
-      message.textContent =
-        "DEBUG: " + JSON.stringify(data);
-
-      callback("");
-    }
-  );
-}
-    }
-
 
     function applyReward() {
 
-      const code = document
-        .getElementById("rewardCode")
-        .value
-        .trim()
-        .toUpperCase();
+      const code =
+        document
+          .getElementById("rewardCode")
+          .value
+          .trim()
+          .toUpperCase();
 
-      const message = document.getElementById("message");
+      const message =
+        document.getElementById("message");
 
       validatedReward = "";
 
+
       if (!code) {
+
         message.className = "error";
+
         message.textContent =
           "Please enter your Petty Reward code.";
+
         return;
       }
 
+
       message.className = "";
-      message.textContent = "Checking reward...";
 
-      getCustomerEmail(function (customerEmail) {
+      message.textContent =
+        "Checking reward...";
 
-        if (!customerEmail) {
-          message.className = "error";
-          message.textContent =
-            "Please enter your email address above first.";
-          return;
-        }
 
-        const url =
-          VALIDATION_URL +
-          "?action=validateReward" +
-          "&code=" + encodeURIComponent(code) +
-          "&email=" + encodeURIComponent(customerEmail);
+      const url =
+        VALIDATION_URL +
+        "?action=validateReward" +
+        "&code=" + encodeURIComponent(code);
 
-        fetch(url)
-          .then(function (response) {
-            return response.json();
-          })
-          .then(function (result) {
 
-            if (!result.valid) {
-              message.className = "error";
-              message.textContent =
-                result.message ||
-                "That reward code isn't valid.";
-              return;
-            }
+      fetch(url)
 
-            validatedReward = JSON.stringify({
-              code: result.code,
-              amount: Number(result.amount),
-              pointsUsed: Number(result.pointsUsed),
-              email: customerEmail
-            });
+        .then(function(response) {
 
-            message.className = "success";
-            message.textContent =
-              "🎉 $" +
-              Number(result.amount).toFixed(2) +
-              " Petty Reward applied!";
+          return response.json();
 
-            JFCustomWidget.sendData({
-              value: validatedReward
-            });
+        })
 
-          })
-          .catch(function (error) {
+        .then(function(result) {
 
-            console.log("Reward validation error:", error);
+          if (!result.valid) {
 
             message.className = "error";
+
             message.textContent =
-              "We couldn't check your reward right now. Please try again.";
+              result.message ||
+              "That reward code isn't valid.";
+
+            return;
+          }
+
+
+          validatedReward =
+            JSON.stringify({
+
+              code: result.code,
+
+              amount:
+                Number(result.amount),
+
+              pointsUsed:
+                Number(result.pointsUsed)
+
+            });
+
+
+          message.className = "success";
+
+          message.textContent =
+            "🎉 $" +
+            Number(result.amount).toFixed(2) +
+            " Petty Reward applied!";
+
+
+          if (
+            typeof JFCustomWidget !==
+            "undefined"
+          ) {
+
+            JFCustomWidget.sendData({
+
+              value:
+                validatedReward
+
+            });
+
+          }
+
+        })
+
+        .catch(function(error) {
+
+          console.log(
+            "Reward validation error:",
+            error
+          );
+
+          message.className = "error";
+
+          message.textContent =
+            "We couldn't check your reward right now. Please try again.";
+
+        });
+
+    }
+
+
+    if (
+      typeof JFCustomWidget !==
+      "undefined"
+    ) {
+
+      JFCustomWidget.subscribe(
+        "submit",
+        function() {
+
+          JFCustomWidget.sendSubmit({
+
+            valid: true,
+
+            value:
+              validatedReward
 
           });
 
-      });
+        }
+      );
+
     }
+
   </script>
 
 </body>
