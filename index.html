@@ -69,159 +69,155 @@
 
 <body>
 
-<div class="reward-box">
+  <div class="reward-box">
 
-  <h2>💗 Have a Petty Reward?</h2>
-  <p>Enter your Petty Reward code below.</p>
+    <h2>💗 Have a Petty Reward?</h2>
+    <p>Enter your Petty Reward code below.</p>
 
-  <input
-    id="rewardCode"
-    type="text"
-    placeholder="PETTY-XXXXXX"
-    autocomplete="off"
-  >
+    <input
+      id="rewardCode"
+      type="text"
+      placeholder="PETTY-XXXXXX"
+      autocomplete="off"
+    >
 
-  <button type="button" onclick="applyReward()">
-    APPLY REWARD
-  </button>
+    <button type="button" onclick="applyReward()">
+      APPLY REWARD
+    </button>
 
-  <div id="message"></div>
+    <div id="message"></div>
 
-</div>
+  </div>
 
-<script>
+  <script>
 
-const VALIDATION_URL =
-"https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
+    const VALIDATION_URL =
+      "https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
 
-let validatedReward = "";
+    let validatedReward = "";
 
 
-/* -------------------------
-   APPLY REWARD
-------------------------- */
+    function applyReward() {
 
-function applyReward() {
+      const code = document
+        .getElementById("rewardCode")
+        .value
+        .trim()
+        .toUpperCase();
 
-  const code = document
-    .getElementById("rewardCode")
-    .value
-    .trim()
-    .toUpperCase();
+      const message =
+        document.getElementById("message");
 
-  const message =
-    document.getElementById("message");
+      validatedReward = "";
 
-  validatedReward = "";
-
-  if (!code) {
-
-    message.className = "error";
-    message.textContent =
-      "Please enter your Petty Reward code.";
-
-    return;
-  }
-
-  message.className = "";
-  message.textContent = "Checking reward...";
-
-  const url =
-    VALIDATION_URL +
-    "?action=validateReward" +
-    "&code=" +
-    encodeURIComponent(code);
-
-  fetch(url)
-
-    .then(function(response) {
-
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
-
-      return response.json();
-
-    })
-
-    .then(function(result) {
-
-      if (!result.valid) {
+      if (!code) {
 
         message.className = "error";
         message.textContent =
-          result.message ||
-          "That reward code isn't valid.";
+          "Please enter your Petty Reward code.";
 
         return;
       }
 
-      validatedReward =
-        JSON.stringify({
-          code: result.code,
-          amount: Number(result.amount),
-          pointsUsed: Number(result.pointsUsed)
+      message.className = "";
+      message.textContent = "Checking reward...";
+
+
+      const url =
+        VALIDATION_URL +
+        "?action=validateReward" +
+        "&code=" +
+        encodeURIComponent(code);
+
+
+      fetch(url)
+
+        .then(function(response) {
+
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          return response.json();
+
+        })
+
+        .then(function(result) {
+
+          if (!result.valid) {
+
+            message.className = "error";
+
+            message.textContent =
+              result.message ||
+              "That reward code isn't valid.";
+
+            return;
+          }
+
+
+          /* Send ONLY the dollar amount to Jotform */
+
+          validatedReward =
+            String(Number(result.amount));
+
+
+          message.className = "success";
+
+          message.textContent =
+            "🎉 $" +
+            Number(result.amount).toFixed(2) +
+            " Petty Reward applied!";
+
+
+          if (window.JFCustomWidget) {
+
+            JFCustomWidget.sendData({
+              value: validatedReward
+            });
+
+          }
+
+        })
+
+        .catch(function(error) {
+
+          console.error(error);
+
+          message.className = "error";
+
+          message.textContent =
+            "We couldn't check your reward right now.";
+
         });
 
-      message.className = "success";
-
-      message.textContent =
-        "🎉 $" +
-        Number(result.amount).toFixed(2) +
-        " Petty Reward applied!";
-
-      if (window.JFCustomWidget) {
-
-        JFCustomWidget.sendData({
-          value: validatedReward
-        });
-
-      }
-
-    })
-
-    .catch(function(error) {
-
-      console.error(error);
-
-      message.className = "error";
-
-      message.textContent =
-        "We couldn't check your reward right now.";
-
-    });
-
-}
+    }
 
 
-/* -------------------------
-   JOTFORM
-------------------------- */
-
-if (window.JFCustomWidget) {
-
-  JFCustomWidget.subscribe(
-    "ready",
-    function() {
+    if (window.JFCustomWidget) {
 
       JFCustomWidget.subscribe(
-        "submit",
+        "ready",
         function() {
 
-          JFCustomWidget.sendSubmit({
-            valid: true,
-            value: validatedReward
-          });
+          JFCustomWidget.subscribe(
+            "submit",
+            function() {
+
+              JFCustomWidget.sendSubmit({
+                valid: true,
+                value: validatedReward
+              });
+
+            }
+          );
 
         }
       );
 
     }
-  );
 
-}
-
-</script>
+  </script>
 
 </body>
 </html>
