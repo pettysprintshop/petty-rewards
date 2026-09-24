@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://cdn.jotfor.ms/s/umd/latest/for-custom-widgets.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 8px;
+      font-family: Arial, sans-serif;
+      background: transparent;
+    }
+
+    .reward-box {
+      width: 100%;
+      padding: 18px;
+      border: 2px solid #ffb3cc;
+      border-radius: 14px;
+      background: #fff1f6;
+      text-align: center;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    p {
+      margin: 0 0 14px;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px;
+      border: 0;
+      border-radius: 8px;
+      background: #111;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #message {
+      margin-top: 12px;
+      font-weight: bold;
+      min-height: 18px;
+    }
+
+    .success {
+      color: #16803a;
+    }
+
+    .error {
+      color: #b42318;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="reward-box">
+    <h2>💗 Have a Petty Reward?</h2>
+    <p>Enter your Petty Reward code below.</p>
+
+    <input
+      id="rewardCode"
+      type="text"
+      placeholder="PETTY-XXXXXX"
+      autocomplete="off"
+    >
+
+    <button type="button" onclick="applyReward()">
+      APPLY REWARD
+    </button>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const VALIDATION_URL =
+      "https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
+
+    let customerEmail = "";
+    let validatedReward = "";
+
+    JFCustomWidget.subscribe("ready", function () {
+
+      JFCustomWidget.getFieldsValueById(["4"], function (response) {
+
+        try {
+          if (response && response["4"]) {
+            customerEmail =
+              response["4"].value ||
+              response["4"] ||
+              "";
+          }
+        } catch (error) {
+          customerEmail = "";
+        }
+
+      });
+
+    });
+
+
+    async function applyReward() {
+
+      const code = document
+        .getElementById("rewardCode")
+        .value
+        .trim()
+        .toUpperCase();
+
+      const message = document.getElementById("message");
+
+      validatedReward = "";
+if (!customerEmail) {
+  message.className = "error";
+  message.textContent = "Please enter your email address above first.";
+  return;
+}
+
+      message.className = "";
+      message.textContent = "Checking reward...";
+
+      const url =
+        VALIDATION_URL +
+        "?action=validateReward" +
+        "&code=" + encodeURIComponent(code) +
+        "&email=" + encodeURIComponent(customerEmail);
+
+      try {
+
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!result.valid) {
+
+          message.className = "error";
+          message.textContent =
+            result.message || "That reward code isn't valid.";
+
+          return;
+        }
+
+        validatedReward = JSON.stringify({
+          code: result.code,
+          amount: Number(result.amount),
+          pointsUsed: Number(result.pointsUsed),
+          email: customerEmail
+        });
+
+        message.className = "success";
+        message.textContent =
+          "🎉 $" + Number(result.amount).toFixed(2) +
+          " Petty Reward applied!";
+
+        JFCustomWidget.sendData({
+          valid: true,
+          value: validatedReward
+        });
+
+      } catch (error) {
+
+        message.className = "error";
+        message.textContent =
+          "We couldn't check your reward right now. Please try again.";
+
+      }
+
+    }
+
+
+    JFCustomWidget.subscribe("submit", function () {
+
+      JFCustomWidget.sendSubmit({
+        valid: validatedReward !== "",
+        value: validatedReward
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>
