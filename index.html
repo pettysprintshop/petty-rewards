@@ -112,17 +112,13 @@ function getCustomerEmail(callback) {
     ["4"],
     function (data) {
 
-      console.log("Jotform email response:", data);
+      const message = document.getElementById("message");
 
-      let email = "";
+      message.className = "";
+      message.textContent =
+        "DEBUG: " + JSON.stringify(data);
 
-      if (data && data["4"]) {
-        email = String(data["4"].value || data["4"])
-          .trim()
-          .toLowerCase();
-      }
-
-      callback(email);
+      callback("");
     }
   );
 }
