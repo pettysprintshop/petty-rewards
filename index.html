@@ -101,25 +101,27 @@
     let customerEmail = "";
     let validatedReward = "";
 
-    JFCustomWidget.subscribe("ready", function () {
+  JFCustomWidget.subscribe("ready", function () {
 
-      JFCustomWidget.getFieldsValueById(["4"], function (response) {
+  JFCustomWidget.getFieldsValueById(["4"], function (response) {
 
-        try {
-          if (response && response["4"]) {
-            customerEmail =
-              response["4"].value ||
-              response["4"] ||
-              "";
-          }
-        } catch (error) {
-          customerEmail = "";
-        }
+    try {
+      console.log("Jotform email response:", response);
 
-      });
+      if (Array.isArray(response) && response.length > 0) {
+        customerEmail = String(response[0].value || "")
+          .trim()
+          .toLowerCase();
+      }
 
-    });
+    } catch (error) {
+      console.log("Email read error:", error);
+      customerEmail = "";
+    }
 
+  });
+
+});
 
     async function applyReward() {
 
