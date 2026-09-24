@@ -7,9 +7,7 @@
   <script src="https://cdn.jotfor.ms/s/umd/latest/for-custom-widgets.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -64,13 +62,8 @@
       min-height: 18px;
     }
 
-    .success {
-      color: #16803a;
-    }
-
-    .error {
-      color: #b42318;
-    }
+    .success { color: #16803a; }
+    .error { color: #b42318; }
   </style>
 </head>
 
@@ -87,7 +80,7 @@
       autocomplete="off"
     >
 
-    <button type="button" onclick="applyReward()">
+    <button type="button" id="applyButton">
       APPLY REWARD
     </button>
 
@@ -98,33 +91,53 @@
     const VALIDATION_URL =
       "https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
 
-    let customerEmail = "";
     let validatedReward = "";
 
-  JFCustomWidget.subscribe("ready", function () {
+    JFCustomWidget.subscribe("ready", function () {
 
-  JFCustomWidget.getFieldsValueById(["input_4"], function (response) {
+      document
+        .getElementById("applyButton")
+        .addEventListener("click", applyReward);
 
-    try {
-      console.log("Jotform email response:", response);
+      JFCustomWidget.subscribe("submit", function () {
+        JFCustomWidget.sendSubmit({
+          valid: true,
+          value: validatedReward
+        });
+      });
 
-      if (Array.isArray(response) && response.length > 0) {
-        customerEmail = String(response[0].value || "")
-          .trim()
-          .toLowerCase();
-      }
+    });
 
-    } catch (error) {
-      console.log("Email read error:", error);
-      customerEmail = "";
+
+    function getCustomerEmail(callback) {
+
+      JFCustomWidget.getFieldsValueByName(
+        ["emailAddress"],
+        function (data) {
+
+          console.log("Email data:", data);
+
+          let email = "";
+
+          try {
+
+            if (Array.isArray(data) && data.length > 0) {
+              email = String(data[0].value || "")
+                .trim()
+                .toLowerCase();
+            }
+
+          } catch (error) {
+            console.log("Email error:", error);
+          }
+
+          callback(email);
+        }
+      );
     }
 
-  });
 
-});
-});
-
-    async function applyReward() {
+    function applyReward() {
 
       const code = document
         .getElementById("rewardCode")
@@ -135,72 +148,76 @@
       const message = document.getElementById("message");
 
       validatedReward = "";
-if (!customerEmail) {
-  message.className = "error";
-  message.textContent = "Please enter your email address above first.";
-  return;
-}
+
+      if (!code) {
+        message.className = "error";
+        message.textContent =
+          "Please enter your Petty Reward code.";
+        return;
+      }
 
       message.className = "";
       message.textContent = "Checking reward...";
 
-      const url =
-        VALIDATION_URL +
-        "?action=validateReward" +
-        "&code=" + encodeURIComponent(code) +
-        "&email=" + encodeURIComponent(customerEmail);
+      getCustomerEmail(function (customerEmail) {
 
-      try {
-
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (!result.valid) {
-
+        if (!customerEmail) {
           message.className = "error";
           message.textContent =
-            result.message || "That reward code isn't valid.";
-
+            "Please enter your email address above first.";
           return;
         }
 
-        validatedReward = JSON.stringify({
-          code: result.code,
-          amount: Number(result.amount),
-          pointsUsed: Number(result.pointsUsed),
-          email: customerEmail
-        });
+        const url =
+          VALIDATION_URL +
+          "?action=validateReward" +
+          "&code=" + encodeURIComponent(code) +
+          "&email=" + encodeURIComponent(customerEmail);
 
-        message.className = "success";
-        message.textContent =
-          "🎉 $" + Number(result.amount).toFixed(2) +
-          " Petty Reward applied!";
+        fetch(url)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (result) {
 
-        JFCustomWidget.sendData({
-          valid: true,
-          value: validatedReward
-        });
+            if (!result.valid) {
+              message.className = "error";
+              message.textContent =
+                result.message ||
+                "That reward code isn't valid.";
+              return;
+            }
 
-      } catch (error) {
+            validatedReward = JSON.stringify({
+              code: result.code,
+              amount: Number(result.amount),
+              pointsUsed: Number(result.pointsUsed),
+              email: customerEmail
+            });
 
-        message.className = "error";
-        message.textContent =
-          "We couldn't check your reward right now. Please try again.";
+            message.className = "success";
+            message.textContent =
+              "🎉 $" +
+              Number(result.amount).toFixed(2) +
+              " Petty Reward applied!";
 
-      }
+            JFCustomWidget.sendData({
+              value: validatedReward
+            });
 
-    }
+          })
+          .catch(function (error) {
 
+            console.log("Reward validation error:", error);
 
-    JFCustomWidget.subscribe("submit", function () {
+            message.className = "error";
+            message.textContent =
+              "We couldn't check your reward right now. Please try again.";
 
-      JFCustomWidget.sendSubmit({
-        valid: validatedReward !== "",
-        value: validatedReward
+          });
+
       });
-
-    });
-
+    }
   </script>
 
 </body>
