@@ -106,32 +106,26 @@
 
     });
 
+function getCustomerEmail(callback) {
 
-    function getCustomerEmail(callback) {
+  JFCustomWidget.getFieldsValueById(
+    ["4"],
+    function (data) {
 
-      JFCustomWidget.getFieldsValueByName(
-        ["q4_email2"],
-        function (data) {
+      console.log("Jotform email response:", data);
 
-          console.log("Email data:", data);
+      let email = "";
 
-          let email = "";
+      if (data && data["4"]) {
+        email = String(data["4"].value || data["4"])
+          .trim()
+          .toLowerCase();
+      }
 
-          try {
-
-            if (Array.isArray(data) && data.length > 0) {
-              email = String(data[0].value || "")
-                .trim()
-                .toLowerCase();
-            }
-
-          } catch (error) {
-            console.log("Email error:", error);
-          }
-
-          callback(email);
-        }
-      );
+      callback(email);
+    }
+  );
+}
     }
 
 
