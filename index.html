@@ -95,6 +95,7 @@
       "https://script.google.com/macros/s/AKfycbytvNKNhUX8OPhUgi_8r4338o9UxdWw5nrsN-RgyKDjgnngaCRJ5R-H2vY3t6SZ1j-d/exec";
 
     let validatedReward = "";
+    let validatedCode = "";
 
 
     function applyReward() {
@@ -109,6 +110,7 @@
         document.getElementById("message");
 
       validatedReward = "";
+      validatedCode = "";
 
       if (!code) {
 
@@ -156,10 +158,19 @@
           }
 
 
-          /* Send ONLY the dollar amount to Jotform */
+          /*
+           * Keep the widget value numeric.
+           * Jotform uses this for the discount calculation.
+           */
 
           validatedReward =
             String(Number(result.amount));
+
+          /*
+           * Save the exact validated reward code.
+           */
+
+          validatedCode = code;
 
 
           message.className = "success";
@@ -172,9 +183,27 @@
 
           if (window.JFCustomWidget) {
 
+            /*
+             * Send the dollar amount as THIS widget's value.
+             */
+
             JFCustomWidget.sendData({
               value: validatedReward
             });
+
+
+            /*
+             * Send the actual reward code to
+             * Jotform field #161:
+             * Petty Reward Code
+             */
+
+            JFCustomWidget.setFieldsValueById([
+              {
+                id: "161",
+                value: validatedCode
+              }
+            ]);
 
           }
 
